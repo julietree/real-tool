@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Material {
+  id            String     @id @default(uuid())
+  name          String
+  qrCode        String     @unique @map("qr_code")
+  totalQuantity Int        @map("total_quantity")
+  minQuantity   Int        @map("min_quantity")
+  unit          String     @default("개")
+  note          String?
+  inventory     Inventory?
+  usageLogs     UsageLog[]
+  orders        Order[]
+
+  @@map("materials")
+}
+
+model Inventory {
+  id         String   @id @default(uuid())
+  materialId String   @unique @map("material_id")
+  inOffice   Int      @map("in_office")
+  inUse      Int      @map("in_use")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  material   Material @relation(fields: [materialId], references: [id])
+
+  @@map("inventory")
+}
+
+model UsageLog {
+  id           String    @id @default(uuid())
+  materialId   String    @map("material_id")
+  userName     String    @map("user_name")
+  workshopName String    @map("workshop_name")
+  quantity     Int
+  startDate    DateTime  @map("start_date")
+  returnDue    DateTime  @map("return_due")
+  returnedAt   DateTime? @map("returned_at")
+  status       String    @default("in_use")
+  material     Material  @relation(fields: [materialId], references: [id])
+
+  @@map("usage_logs")
+}
+
+model Order {
+  id         String   @id @default(uuid())
+  materialId String   @map("material_id")
+  requester  String
+  quantity   Int
+  useDate    DateTime @map("use_date")
+  note       String?
+  status     String   @default("requested")
+  createdAt  DateTime @default(now()) @map("created_at")
+  material   Material @relation(fields: [materialId], references: [id])
+
+  @@map("orders")
+}
